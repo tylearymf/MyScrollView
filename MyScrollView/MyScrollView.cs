@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using System;
 
 public enum MyDragDirection
 {
@@ -95,14 +96,14 @@ public class MyScrollView : MonoBehaviour
 
     void Start()
     {
-        List<GameObject> temps = new List<GameObject>();
+        items = new List<GameObject>();
         for (int i = 0; i < 3; i++)
         {
             GameObject g = Myutils.makeGameObject(ItemPrefab, ItemPos);
             g.name = i.ToString();
-            temps.Add(g);
+            items.Add(g);
         }
-        ItemLayout(temps);
+        ItemLayout(items);
     }
 
     LinkedList<GameObject> linkedObjects = new LinkedList<GameObject>();
@@ -282,6 +283,14 @@ public class MyScrollView : MonoBehaviour
     public Transform ItemPos;
     Direction direction;
 
+    /// <summary>
+    /// 存储所显示的对象
+    /// </summary>
+    List<GameObject> items;
+    /// <summary>
+    /// 记录当前所指向的对象
+    /// </summary>
+    GameObject currentItem;
 
     int oldIndex;
     int totalCount = 10;
@@ -295,39 +304,53 @@ public class MyScrollView : MonoBehaviour
         {
             case Direction.Left:
 
+                if (linkedObjects.Find(currentItem).Next == null)
+                {
+                    Debug.Log("到达最后一个节点！！！");
 
+                    int leftIndex = index + 1;
+                    if (leftIndex >= totalCount) break;
 
-                int leftIndex = index + 1;
-                if (leftIndex >= totalCount) break;
+                    item = Myutils.makeGameObject(ItemPrefab, ItemPos);
+                    item.transform.SetLocalX(item.transform.localPosition.x + leftIndex * itemOffsetX);
+                    item.name = leftIndex.ToString();
+                    linkedObjects.AddLast(item);
+                    items.Add(item);
 
-                //item = Myutils.makeGameObject(ItemPrefab, ItemPos);
-                //item.transform.SetLocalX(item.transform.localPosition.x + leftIndex * itemOffsetX);
-                //item.name = leftIndex.ToString();
-                //linkedObjects.AddLast(item);
-
-                //GameObject first = linkedObjects.First.Value;
-                //if (first != null)
-                //{
-                //    Debug.Log("first=" + first.name);
-                //    Destroy(first);
-                //}
+                    GameObject first = linkedObjects.First.Value;
+                    if (first != null)
+                    {
+                        Debug.Log("first=" + first.name);
+                        Destroy(first);
+                        items.RemoveAt(0);
+                    }
+                    linkedObjects.RemoveFirst();
+                }
                 break;
             case Direction.Right:
 
-                int rightIndex = index - 1;
-                if (rightIndex < 0) break;
+                if (linkedObjects.Find(currentItem).Previous == null)
+                {
+                    Debug.Log("到达第一个节点！！！");
 
-                //item = Myutils.makeGameObject(ItemPrefab, ItemPos);
-                //item.transform.SetLocalX(item.transform.localPosition.x + rightIndex * itemOffsetX);
-                //item.name = rightIndex.ToString();
-                //linkedObjects.AddFirst(item);
+                    int rightIndex = index - 1;
+                    if (rightIndex < 0) break;
 
-                //GameObject last = linkedObjects.Last.Value;
-                //if (last != null)
-                //{
-                //    Debug.Log("last=" + last.name);
-                //    Destroy(last);
-                //}
+                    item = Myutils.makeGameObject(ItemPrefab, ItemPos);
+                    item.transform.SetLocalX(item.transform.localPosition.x + rightIndex * itemOffsetX);
+                    item.name = rightIndex.ToString();
+                    linkedObjects.AddFirst(item);
+                    items.Insert(0, item);
+
+                    GameObject last = linkedObjects.Last.Value;
+                    if (last != null)
+                    {
+                        Debug.Log("last=" + last.name);
+                        Destroy(last);
+                        items.RemoveAt(3);
+                    }
+                    linkedObjects.RemoveLast();
+                }
                 break;
         }
     }
@@ -338,7 +361,7 @@ public class MyScrollView : MonoBehaviour
         int y = (int)(endDelta.y - startDelta.y);
         //Debug.Log(index + "###" + x);
 
-        if (index >= itemsCount) index = 0;
+        if (index >= totalCount) index = 0;
 
         if (dragDirec == MyDragDirection.Horizontal)
         {
@@ -349,7 +372,7 @@ public class MyScrollView : MonoBehaviour
                 direction = Direction.Right;
                 SpringBegin();
             }
-            else if (x < 0 && x < (-1 * miniDragX) && (index + 1) < itemsCount)
+            else if (x < 0 && x < (-1 * miniDragX) && (index + 1) < totalCount)
             {
                 oldIndex = index;
                 index++;
@@ -371,7 +394,7 @@ public class MyScrollView : MonoBehaviour
                 direction = Direction.Right;
                 SpringBegin();
             }
-            else if (y > 0 && y > miniDragY && (index + 1) < itemsCount)
+            else if (y > 0 && y > miniDragY && (index + 1) < totalCount)
             {
                 oldIndex = index;
                 index++;
@@ -414,6 +437,10 @@ public class MyScrollView : MonoBehaviour
         {
             ondragFinished(index);
         }
+
+        int firstID = Convert.ToInt32(items[0].name);
+        currentItem = items[index - firstID];
+        Debug.Log("currentItem=" + currentItem.name);
     }
 
     /// <summary>
