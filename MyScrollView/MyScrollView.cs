@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
-using System;
 
 public enum MyDragDirection
 {
@@ -12,26 +11,25 @@ public enum MyDragDirection
 public class MyScrollView : MonoBehaviour
 {
 
-    int index = 0;
-    SpringPanel sp;
-    UIScrollView scrollView;
-    Vector2 startDelta;     ///鼠标按下记录的起点坐标
-    Vector2 endDelta;       ///鼠标抬起记录的重担坐标
-#pragma warning disable
-    Vector3 svcPos;         ///记录上一次ScrollView的本地坐标
-    Vector3 startSvcPos;      ///记录ScrollView开始的本地坐标
+    private int index = 0;
+    private SpringPanel sp;
+    private UIScrollView scrollView;
+    private Vector2 startDelta;     ///鼠标按下记录的起点坐标
+    private Vector2 endDelta;       ///鼠标抬起记录的重担坐标
+    private Vector3 svcPos;         ///记录上一次ScrollView的本地坐标
+    private Vector3 startSvcPos;      ///记录ScrollView开始的本地坐标
 
-    int maxPageOffsetX;     ///页面的宽度
-    int maxPageOffsetY;     ///页面的高度
-    int itemsCount;     ///item的集合
-    int minPageOffsetX;     ///两个页面间距X轴偏移量
-    int minPageOffsetY;     ///两个页面间距Y轴偏移量
+    private int maxPageOffsetX;     ///页面的宽度
+    private int maxPageOffsetY;     ///页面的高度
+    private int itemsCount;     ///item的集合
+    private int minPageOffsetX;     ///两个页面间距X轴偏移量
+    private int minPageOffsetY;     ///两个页面间距Y轴偏移量
 
-    int miniDragX;      ///最小移动X轴阻尼
-    int miniDragY;      ///最小移动Y轴阻尼
+    private int miniDragX;      ///最小移动X轴阻尼
+    private int miniDragY;      ///最小移动Y轴阻尼
 
-    List<GameObject> points;    ///点的 集合
-    GameObject pointRoot;  ///点的父对象
+    private List<GameObject> points;    ///点的 集合
+    private GameObject pointRoot;  ///点的父对象
 
     public float momentumAmount = 0.1F;  ///移动阻尼， 数值越小越容易移动
     public float itemOffsetX;   //item间距X轴偏移量
@@ -51,7 +49,7 @@ public class MyScrollView : MonoBehaviour
 
     [HideInInspector]
     [SerializeField]
-    MyDragDirection _dragDirec = MyDragDirection.Horizontal;
+    private MyDragDirection _dragDirec = MyDragDirection.Horizontal;
     public MyDragDirection dragDirec
     {
         set { _dragDirec = value; }
@@ -60,7 +58,7 @@ public class MyScrollView : MonoBehaviour
 
     [HideInInspector]
     [SerializeField]
-    float _pageOffsetX;
+    private float _pageOffsetX;
     public float pageOffsetX
     {
         set { _pageOffsetX = value; }
@@ -69,7 +67,7 @@ public class MyScrollView : MonoBehaviour
 
     [HideInInspector]
     [SerializeField]
-    float _pageOffsetY;
+    private float _pageOffsetY;
     public float pageOffsetY
     {
         set { _pageOffsetY = value; }
@@ -78,7 +76,7 @@ public class MyScrollView : MonoBehaviour
 
     [HideInInspector]
     [SerializeField]
-    float _pointOffsetX;
+    private float _pointOffsetX;
     public float pointOffsetX
     {
         set { _pointOffsetX = value; }
@@ -87,26 +85,12 @@ public class MyScrollView : MonoBehaviour
 
     [HideInInspector]
     [SerializeField]
-    float _pointOffsetY;
+    private float _pointOffsetY;
     public float pointOffsetY
     {
         set { _pointOffsetY = value; }
         get { return _pointOffsetY; }
     }
-
-    void Start()
-    {
-        items = new List<GameObject>();
-        for (int i = 0; i < 3; i++)
-        {
-            GameObject g = Myutils.makeGameObject(ItemPrefab, ItemPos);
-            g.name = i.ToString();
-            items.Add(g);
-        }
-        ItemLayout(items);
-    }
-
-    LinkedList<GameObject> linkedObjects = new LinkedList<GameObject>();
 
     public void ItemLayout(List<GameObject> _items)
     {
@@ -120,11 +104,6 @@ public class MyScrollView : MonoBehaviour
         {
             Debug.LogError("行数或列数不能为0！！");
             return;
-        }
-
-        for (int i = 0; i < _items.Count; i++)
-        {
-            linkedObjects.AddLast(_items[i]);
         }
 
         pointRoot = pointPos.transform.parent.gameObject;
@@ -249,7 +228,7 @@ public class MyScrollView : MonoBehaviour
         return gb;
     }
 
-    void ChangePoint(int index = 0)
+    private void ChangePoint(int index = 0)
     {
         if (points == null) return;
         foreach (var item in points)
@@ -260,99 +239,17 @@ public class MyScrollView : MonoBehaviour
         if (index >= 0 && index < points.Count) points[index].GetComponent<point>().Change();
     }
 
-    void onDragFinished()
+    private void onDragFinished()
     {
         endDelta = scrollView.transform.localPosition;
         //Debug.Log("拖拽完成");
         ChangePos();
     }
 
-    void onDragStarted()
+    private void onDragStarted()
     {
         startDelta = scrollView.transform.localPosition;
         //Debug.Log("拖拽开始");
-    }
-
-    enum Direction
-    {
-        Left,
-        Right
-    }
-
-    public GameObject ItemPrefab;
-    public Transform ItemPos;
-    Direction direction;
-
-    /// <summary>
-    /// 存储所显示的对象
-    /// </summary>
-    List<GameObject> items;
-    /// <summary>
-    /// 记录当前所指向的对象
-    /// </summary>
-    GameObject currentItem;
-
-    int oldIndex;
-    int totalCount = 10;
-    void AddAndRemoveLinkedList()
-    {
-        if (oldIndex == index) return;
-
-        Debug.Log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + ";;;" + direction.ToString());
-        GameObject item;
-        switch (direction)
-        {
-            case Direction.Left:
-
-                if (linkedObjects.Find(currentItem).Next == null)
-                {
-                    Debug.Log("到达最后一个节点！！！");
-
-                    int leftIndex = index + 1;
-                    if (leftIndex >= totalCount) break;
-
-                    item = Myutils.makeGameObject(ItemPrefab, ItemPos);
-                    item.transform.SetLocalX(item.transform.localPosition.x + leftIndex * itemOffsetX);
-                    item.name = leftIndex.ToString();
-                    linkedObjects.AddLast(item);
-                    items.Add(item);
-
-                    GameObject first = linkedObjects.First.Value;
-                    if (first != null)
-                    {
-                        Debug.Log("first=" + first.name);
-                        Destroy(first);
-                        items.RemoveAt(0);
-                    }
-                    linkedObjects.RemoveFirst();
-                }
-                break;
-            case Direction.Right:
-
-                if (linkedObjects.Find(currentItem).Previous == null)
-                {
-                    Debug.Log("到达第一个节点！！！");
-
-                    int rightIndex = index - 1;
-                    if (rightIndex < 0) break;
-
-                    item = Myutils.makeGameObject(ItemPrefab, ItemPos);
-                    item.transform.SetLocalX(item.transform.localPosition.x + rightIndex * itemOffsetX);
-                    item.name = rightIndex.ToString();
-                    linkedObjects.AddFirst(item);
-                    items.Insert(0, item);
-
-                    GameObject last = linkedObjects.Last.Value;
-                    if (last != null)
-                    {
-                        Debug.Log("last=" + last.name);
-                        Destroy(last);
-                        items.RemoveAt(3);
-                    }
-                    linkedObjects.RemoveLast();
-                }
-                break;
-        }
     }
 
     public void ChangePos()
@@ -361,22 +258,18 @@ public class MyScrollView : MonoBehaviour
         int y = (int)(endDelta.y - startDelta.y);
         //Debug.Log(index + "###" + x);
 
-        if (index >= totalCount) index = 0;
+        if (index >= itemsCount) index = 0;
 
         if (dragDirec == MyDragDirection.Horizontal)
         {
             if (x > 0 && x > miniDragX && (index - 1) >= 0)
             {
-                oldIndex = index;
                 index--;
-                direction = Direction.Right;
                 SpringBegin();
             }
-            else if (x < 0 && x < (-1 * miniDragX) && (index + 1) < totalCount)
+            else if (x < 0 && x < (-1 * miniDragX) && (index + 1) < itemsCount)
             {
-                oldIndex = index;
                 index++;
-                direction = Direction.Left;
                 SpringBegin();
             }
             else
@@ -389,16 +282,12 @@ public class MyScrollView : MonoBehaviour
         {
             if (y < 0 && y < (-1 * miniDragY) && (index - 1) >= 0)
             {
-                oldIndex = index;
                 index--;
-                direction = Direction.Right;
                 SpringBegin();
             }
-            else if (y > 0 && y > miniDragY && (index + 1) < totalCount)
+            else if (y > 0 && y > miniDragY && (index + 1) < itemsCount)
             {
-                oldIndex = index;
                 index++;
-                direction = Direction.Left;
                 SpringBegin();
             }
             else
@@ -408,7 +297,7 @@ public class MyScrollView : MonoBehaviour
         }
     }
 
-    void SpringBegin(int strength = 8)
+    private void SpringBegin(int strength = 8)
     {
         sp = gameObject.GetComponent<SpringPanel>();
         if (sp == null) sp = gameObject.AddComponent<SpringPanel>();
@@ -429,7 +318,6 @@ public class MyScrollView : MonoBehaviour
         sp.target = vec;
         sp.strength = strength;
         sp.enabled = true;
-        sp.finished = AddAndRemoveLinkedList;
 
         ////改变标识点
         ChangePoint(index);
@@ -437,10 +325,6 @@ public class MyScrollView : MonoBehaviour
         {
             ondragFinished(index);
         }
-
-        int firstID = Convert.ToInt32(items[0].name);
-        currentItem = items[index - firstID];
-        Debug.Log("currentItem=" + currentItem.name);
     }
 
     /// <summary>
