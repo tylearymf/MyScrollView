@@ -96,9 +96,12 @@ public class MyScrollViewPage : MonoBehaviour
         sp.GenerateMomentumAmount = GenerateMomentumAmount;
 
         items = new List<GameObject>();
-        //pageStartCount = 0;
+
         pageStartCount = CellCount * RowCount * 3;
 
+        pageStartCount = pageStartCount > itemTotalCount ? itemTotalCount : pageStartCount;
+
+        Debug.Log("pageStartCount=" + pageStartCount + "----itemTotalCount=" + itemTotalCount);
         for (int i = 0; i < pageStartCount;)
         {
             GameObject g = Myutils.makeGameObject(ItemPrefab, ItemPos);
